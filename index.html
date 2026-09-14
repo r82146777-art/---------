@@ -28,11 +28,36 @@
         .header {
             background-color: var(--chat-bg);
             padding: 15px 20px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 1px solid #333;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+        .settings-btn, .model-select {
+            background: none;
+            border: 1px solid #555;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            background-color: var(--chat-bg);
+            outline: none;
+        }
+        .settings-btn:hover, .model-select:hover {
+            background-color: #333;
+            border-color: var(--accent-color);
         }
         .skill-store {
             background-color: var(--skill-bg);
@@ -164,7 +189,15 @@
 <body>
 
     <div class="header">
-        🚀 پلتفرم ابری هوش مصنوعی هرمس
+        <div class="header-title">🚀 پلتفرم ابری هرمس</div>
+        <div class="controls">
+            <!-- منوی انتخاب مدل اضافه شد -->
+            <select id="model-select" class="model-select">
+                <option value="gemini-1.5-flash">⚡ موتور Flash (پرسرعت)</option>
+                <option value="gemini-1.5-pro">🧠 موتور Pro (پیشرفته)</option>
+            </select>
+            <button class="settings-btn" onclick="askForKey(true)">🔑 کلید API</button>
+        </div>
     </div>
 
     <!-- فروشگاه مهارت‌ها -->
@@ -172,13 +205,13 @@
         <button class="skill-btn active" onclick="loadSkill('عمومی', this)">🧠 هرمس عمومی</button>
         <button class="skill-btn" onclick="loadSkill('گیت‌هاب', this)">⚙️ معمار گیت‌هاب و سرور</button>
         <button class="skill-btn" onclick="loadSkill('روبیکا و تلگرام', this)">🤖 مدیر ربات‌های شبکه‌های اجتماعی</button>
-        <button class="skill-btn" onclick="loadSkill('محتوا', this)">🎬 کارگردان محتوا و تبلیغات</button>
+        <button class="skill-btn" onclick="loadSkill('محتوا', this)">🎬 کارگردان محتوا</button>
     </div>
 
     <div class="chat-container" id="chat-box">
         <div class="message-wrapper bot-wrapper">
             <div class="message bot-message">
-                سلام! من هرمس هستم. فروشگاه مهارت‌ها با موفقیت متصل شد و موتور ۳.۵ فلش با تمام توان آماده است!
+                سلام! من هرمس هستم. سیستم امنیتی فعال است. لطفاً موتور مورد نظر خود را از بالا انتخاب کنید و سوالتان را بپرسید.
             </div>
         </div>
     </div>
@@ -186,55 +219,64 @@
     <div class="loading" id="loading-indicator">در حال پردازش و جستجو... ⏳</div>
 
     <div class="input-area">
-        <button class="action-btn" title="آپلود فایل" onclick="alert('سرویس تحلیل فایل ابری به زودی اضافه می‌شود.')">📎 فایل</button>
-        <input type="text" id="user-input" placeholder="دستور خود را وارد کنید..." onkeypress="handleKeyPress(event)">
+        <button class="action-btn" title="آپلود فایل" onclick="alert('سرویس تحلیل فایل در آپدیت بعدی فعال خواهد شد.')">📎 فایل</button>
+        <input type="text" id="user-input" placeholder="درخواست خود را وارد کنید..." onkeypress="handleKeyPress(event)">
         <button class="main-btn" onclick="sendMessage()">ارسال</button>
     </div>
 
     <script>
-        const GEMINI_API_KEY = "AIzaSyBO7w5ZwtIna8wldVdwlrPs53MB_dNJwV8";
         const TG_TOKEN = "8874847772:AAEeY_PG0OfCEvotkvMdmkx565C40xQgJNE";
         const TG_CHAT_ID = "8584850711"; 
         
+        let GEMINI_API_KEY = localStorage.getItem("hermes_api_key");
+
         const chatBox = document.getElementById("chat-box");
         const userInput = document.getElementById("user-input");
         const loadingIndicator = document.getElementById("loading-indicator");
+        const modelSelect = document.getElementById("model-select");
 
-        let currentSkillset = "شما هرمس هستید، یک هوش مصنوعی بسیار هوشمند که به زبان فارسی و با دقت کامل پاسخ می‌دهد.";
+        // بررسی و دریافت کلید
+        function askForKey(force = false) {
+            if (!GEMINI_API_KEY || force) {
+                let key = prompt("لطفاً کلید API جدید خود را وارد کنید (فقط در مرورگر شما ذخیره می‌شود):", GEMINI_API_KEY || "");
+                if (key && key.trim() !== "") {
+                    GEMINI_API_KEY = key.trim();
+                    localStorage.setItem("hermes_api_key", GEMINI_API_KEY);
+                    if(force) alert("✅ کلید با موفقیت ذخیره شد.");
+                }
+            }
+        }
+
+        window.onload = () => askForKey(false);
+
+        let currentSkillset = "شما هرمس هستید، یک هوش مصنوعی بسیار هوشمند که به زبان فارسی پاسخ می‌دهد.";
 
         let chatHistory = [
-            {
-                "role": "user",
-                "parts": [{"text": currentSkillset}]
-            },
-            {
-                "role": "model",
-                "parts": [{"text": "بله، متوجه شدم. من هرمس هستم."}]
-            }
+            {"role": "user", "parts": [{"text": currentSkillset}]},
+            {"role": "model", "parts": [{"text": "بله، من آماده‌ام."}]}
         ];
 
-        // تابع دانلود و تغییر مهارت
+        // مدیریت فروشگاه مهارت‌ها
         function loadSkill(skillName, btnElement) {
             document.querySelectorAll('.skill-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
 
             if(skillName === 'گیت‌هاب') {
-                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: معمار ارشد گیت‌هاب. شما متخصص نوشتن فایل‌های GitHub Actions، راه‌اندازی سرورهای ابری، کدهای پایتون و پیاده‌سازی سیستم‌های خودکار هستید.";
+                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: معمار ارشد گیت‌هاب و سرور. متخصص کدهای پایتون، سیستم‌های ابری و اتوماسیون.";
             } else if(skillName === 'روبیکا و تلگرام') {
-                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: مدیر بات‌ها. شما متخصص نوشتن اسکریپت و ساختار برای بات‌های تلگرام، روبیکا، و بله هستید و در اتصال API این شبکه‌ها تخصص کامل دارید.";
+                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: مدیر بات‌ها. متخصص ساخت و اتصال API برای تلگرام، روبیکا و بله.";
             } else if(skillName === 'محتوا') {
-                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: تولیدکننده محتوا و سناریو. شما متخصص نوشتن متن تبلیغاتی جذاب، داستان‌سرایی برای پادکست، پیشنهاد موسیقی بی‌کلام برای پس‌زمینه ویدیو و مدیریت کانال هستید.";
+                currentSkillset = "شما هرمس هستید. مهارت فعلی شما: تولیدکننده محتوا. متخصص سناریونویسی، متن تبلیغاتی و پادکست.";
             } else {
                 currentSkillset = "شما هرمس هستید، یک هوش مصنوعی بسیار هوشمند که به زبان فارسی پاسخ می‌دهد.";
             }
 
-            // پاک کردن حافظه و تزریق مهارت جدید
             chatHistory = [
                 {"role": "user", "parts": [{"text": currentSkillset}]},
-                {"role": "model", "parts": [{"text": `مهارت جدید (${skillName}) با موفقیت در سیستم من بارگذاری شد. در خدمتم!`}]}
+                {"role": "model", "parts": [{"text": `مهارت جدید (${skillName}) در سیستم من بارگذاری شد.`}]}
             ];
             
-            appendMessage("bot", `✅ مهارت [${skillName}] با موفقیت دانلود و در ذهن هرمس نصب شد.`);
+            appendMessage("bot", `✅ مهارت [${skillName}] با موفقیت دانلود و نصب شد.`);
         }
 
         function handleKeyPress(event) {
@@ -262,17 +304,14 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         chat_id: TG_CHAT_ID,
-                        text: "📤 **پیام ارسال شده از پلتفرم هرمس:**\n\n" + text,
+                        text: "📤 **پیام پلتفرم هرمس:**\n\n" + text,
                         parse_mode: 'Markdown'
                     })
                 });
-                if(response.ok) {
-                    alert("✅ پیام با موفقیت به ربات تلگرام شما ارسال شد!");
-                } else {
-                    alert("⚠️ خطا در ارسال پیام به تلگرام.");
-                }
+                if(response.ok) alert("✅ پیام به تلگرام ارسال شد!");
+                else alert("⚠️ خطا در ارسال پیام.");
             } catch (error) {
-                alert("⚠️ خطای ارتباط اینترنت برای ارسال به تلگرام.");
+                alert("⚠️ خطای اینترنت در ارسال پیام.");
             }
         }
 
@@ -308,7 +347,7 @@
 
                 const tgBtn = document.createElement("button");
                 tgBtn.classList.add("action-btn", "send-btn");
-                tgBtn.innerText = "✈️ ارسال به تلگرام";
+                tgBtn.innerText = "✈️ تلگرام";
                 tgBtn.onclick = () => sendToTelegram(text);
 
                 actionsDiv.appendChild(copyBtn);
@@ -321,6 +360,11 @@
         }
 
         async function sendMessage() {
+            if (!GEMINI_API_KEY) {
+                askForKey();
+                if(!GEMINI_API_KEY) return;
+            }
+
             const text = userInput.value.trim();
             if (!text) return;
 
@@ -330,10 +374,12 @@
 
             const currentUserMsg = {"role": "user", "parts": [{"text": text}]};
             const currentHistory = [...chatHistory, currentUserMsg];
+            
+            // گرفتن مدل انتخابی از منوی کشویی
+            const selectedModel = modelSelect.value;
 
             try {
-                // آدرس دقیقا روی مدل gemini-3.5-flash تنظیم شد
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${GEMINI_API_KEY}`, {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({"contents": currentHistory})
@@ -347,7 +393,7 @@
                     chatHistory.push(currentUserMsg);
                     chatHistory.push({"role": "model", "parts": [{"text": botReply}]});
                 } else if (data.error) {
-                    appendMessage("bot", `⚠️ خطای سرور گوگل: ${data.error.message}`);
+                    appendMessage("bot", `⚠️ خطا از سرور گوگل (ممکن است مدل انتخابی توسط کلید شما پشتیبانی نشود. مدل را تغییر دهید):\n ${data.error.message}`);
                 }
             } catch (error) {
                 appendMessage("bot", "⚠️ خطای ارتباط اینترنت! (لطفاً فیلترشکن خود را بررسی کنید).");
