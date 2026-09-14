@@ -191,10 +191,10 @@
     <div class="header">
         <div class="header-title">🚀 پلتفرم ابری هرمس</div>
         <div class="controls">
-            <!-- منوی انتخاب مدل اضافه شد -->
+            <!-- منوی انتخاب مدل اصلاح شد به نام‌هایی که شما تعیین کردید -->
             <select id="model-select" class="model-select">
-                <option value="gemini-1.5-flash">⚡ موتور Flash (پرسرعت)</option>
-                <option value="gemini-1.5-pro">🧠 موتور Pro (پیشرفته)</option>
+                <option value="gemini-3.5-flash">⚡ موتور Flash (نسخه ۳.۵)</option>
+                <option value="gemini-3.1-pro">🧠 موتور Pro (نسخه ۳.۱)</option>
             </select>
             <button class="settings-btn" onclick="askForKey(true)">🔑 کلید API</button>
         </div>
@@ -211,7 +211,7 @@
     <div class="chat-container" id="chat-box">
         <div class="message-wrapper bot-wrapper">
             <div class="message bot-message">
-                سلام! من هرمس هستم. سیستم امنیتی فعال است. لطفاً موتور مورد نظر خود را از بالا انتخاب کنید و سوالتان را بپرسید.
+                سلام! من هرمس هستم. سیستم امنیتی فعال است. مدل‌های ۳.۵ فلش و ۳.۱ پرو در منوی بالا در دسترس هستند.
             </div>
         </div>
     </div>
@@ -235,7 +235,6 @@
         const loadingIndicator = document.getElementById("loading-indicator");
         const modelSelect = document.getElementById("model-select");
 
-        // بررسی و دریافت کلید
         function askForKey(force = false) {
             if (!GEMINI_API_KEY || force) {
                 let key = prompt("لطفاً کلید API جدید خود را وارد کنید (فقط در مرورگر شما ذخیره می‌شود):", GEMINI_API_KEY || "");
@@ -256,7 +255,6 @@
             {"role": "model", "parts": [{"text": "بله، من آماده‌ام."}]}
         ];
 
-        // مدیریت فروشگاه مهارت‌ها
         function loadSkill(skillName, btnElement) {
             document.querySelectorAll('.skill-btn').forEach(btn => btn.classList.remove('active'));
             btnElement.classList.add('active');
@@ -393,7 +391,7 @@
                     chatHistory.push(currentUserMsg);
                     chatHistory.push({"role": "model", "parts": [{"text": botReply}]});
                 } else if (data.error) {
-                    appendMessage("bot", `⚠️ خطا از سرور گوگل (ممکن است مدل انتخابی توسط کلید شما پشتیبانی نشود. مدل را تغییر دهید):\n ${data.error.message}`);
+                    appendMessage("bot", `⚠️ خطا از سرور گوگل (ممکن است مدل انتخابی توسط کلید شما پشتیبانی نشود. مدل را از منوی بالا تغییر دهید):\n ${data.error.message}`);
                 }
             } catch (error) {
                 appendMessage("bot", "⚠️ خطای ارتباط اینترنت! (لطفاً فیلترشکن خود را بررسی کنید).");
